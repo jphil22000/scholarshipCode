@@ -16,7 +16,7 @@ if [ ! -d .git ] || ! git rev-parse --git-dir &>/dev/null; then
 fi
 
 git remote remove origin 2>/dev/null || true
-git remote add origin https://github.com/jphil22000/scholarships.git
+git remote add origin https://jphil22000@github.com/jphil22000/scholarshipCode.git
 
 git add -A
 git status
@@ -34,4 +34,4 @@ branch=$(git branch --show-current 2>/dev/null || echo "main")
 echo "Pushing to origin $branch..."
 git push -u origin "$branch"
 
-echo "Done. Repo: https://github.com/jphil22000/scholarships"
+echo "Done. Repo: https://github.com/jphil22000/scholarshipCode"

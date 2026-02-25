@@ -1,0 +1,11 @@
+# This repo uses your PERSONAL GitHub account (jphil22000), not work.
+# Remote is set to: https://jphil22000@github.com/jphil22000/scholarshipCode.git
+#
+# If push uses the wrong account (e.g. work), run once:
+#   git remote set-url origin https://jphil22000@github.com/jphil22000/scholarshipCode.git
+#   git credential reject <<EOF
+#   protocol=https
+#   host=github.com
+#   EOF
+#   git push -u origin main
+# Then enter your jphil22000 Personal Access Token when prompted.
