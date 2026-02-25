@@ -1,0 +1,222 @@
+[
+  {
+    "id": "coca-cola-scholars",
+    "title": "Coca-Cola Scholars Program",
+    "description": "Merit-based scholarship for high school seniors who demonstrate leadership, academic excellence, and commitment to community service. 150 awards of $20,000 each.",
+    "amount": 20000,
+    "deadline": "2025-10-31",
+    "source": "Coca-Cola Scholars Foundation",
+    "type": "merit",
+    "eligibility": "High school senior, US citizen or permanent resident, minimum 3.0 GPA",
+    "applicationUrl": "https://www.coca-colascholarsfoundation.org/"
+  },
+  {
+    "id": "gates-scholarship",
+    "title": "Gates Scholarship",
+    "description": "Full-ride scholarship for outstanding minority high school seniors from low-income households. Covers full cost of attendance not covered by other financial aid.",
+    "amount": 100000,
+    "deadline": "2025-09-15",
+    "source": "Bill & Melinda Gates Foundation",
+    "type": "merit",
+    "eligibility": "Pell-eligible, minority, US citizen or permanent resident, high school senior",
+    "applicationUrl": "https://www.thegatescholarship.org/"
+  },
+  {
+    "id": "dell-scholars",
+    "title": "Dell Scholars Program",
+    "description": "$20,000 scholarship plus support services for students who have overcome significant obstacles to pursue higher education.",
+    "amount": 20000,
+    "deadline": "2025-12-01",
+    "source": "Dell Scholars",
+    "type": "need",
+    "eligibility": "Participating program student, GPA 2.4+, US citizen or permanent resident",
+    "applicationUrl": "https://www.dellscholars.org/"
+  },
+  {
+    "id": "ronald-mcdonald-scholars",
+    "title": "Ronald McDonald House Charities Scholarship",
+    "description": "Scholarships for graduating high school seniors. Awards vary by chapter; national program offers significant support.",
+    "amount": 100000,
+    "deadline": "2025-01-27",
+    "source": "RMHC",
+    "type": "merit",
+    "eligibility": "High school senior, under 21, legal US resident, eligible to attend 2- or 4-year college",
+    "applicationUrl": "https://www.rmhc.org/scholarships"
+  },
+  {
+    "id": "elks-most-valuable-student",
+    "title": "Elks Most Valuable Student Scholarship",
+    "description": "Merit-based scholarship for high school seniors. 500 four-year scholarships ranging from $4,000 to $50,000.",
+    "amount": 50000,
+    "deadline": "2025-11-15",
+    "source": "Elks National Foundation",
+    "type": "merit",
+    "eligibility": "High school senior, US citizen, planning to attend accredited US college",
+    "applicationUrl": "https://www.elks.org/scholars/scholarships/mvs.cfm"
+  },
+  {
+    "id": "foot-locker-scholar-athletes",
+    "title": "Foot Locker Scholar Athletes",
+    "description": "$20,000 scholarship for high school seniors who excel in sports, academics, and community. 20 winners annually.",
+    "amount": 20000,
+    "deadline": "2025-12-15",
+    "source": "Foot Locker Foundation",
+    "type": "merit",
+    "eligibility": "High school senior, involved in sports, 3.0+ GPA, US resident",
+    "applicationUrl": "https://footlockerscholarathletes.com/"
+  },
+  {
+    "id": "buick-achievers",
+    "title": "Buick Achievers Scholarship",
+    "description": "Scholarships for first-generation college students pursuing STEM or business-related fields. Awards up to $25,000.",
+    "amount": 25000,
+    "deadline": "2025-02-28",
+    "source": "Buick Achievers",
+    "type": "merit",
+    "eligibility": "High school senior or undergrad, plan to major in STEM or business, US/Canada",
+    "applicationUrl": "https://www.buickachievers.com/"
+  },
+  {
+    "id": "cameron-impact-scholarship",
+    "title": "Cameron Impact Scholarship",
+    "description": "Full-ride, four-year scholarship for high school seniors who demonstrate leadership, community service, and academic excellence.",
+    "amount": 200000,
+    "deadline": "2025-09-08",
+    "source": "Cameron Impact Foundation",
+    "type": "merit",
+    "eligibility": "High school senior, US citizen, planning to enroll full-time at 4-year college",
+    "applicationUrl": "https://www.cameronimpactfoundation.org/scholarship"
+  },
+  {
+    "id": "questbridge-national-match",
+    "title": "QuestBridge National College Match",
+    "description": "Full four-year scholarship (tuition, room & board) for low-income high school seniors to top colleges. Partner colleges include Stanford, MIT, Yale.",
+    "amount": 200000,
+    "deadline": "2025-09-26",
+    "source": "QuestBridge",
+    "type": "need",
+    "eligibility": "High school senior, US citizen or permanent resident, from low-income family",
+    "applicationUrl": "https://www.questbridge.org/"
+  },
+  {
+    "id": "posse-foundation",
+    "title": "Posse Foundation Scholarship",
+    "description": "Full-tuition leadership scholarship. Students are selected in diverse teams (Posses) and attend partner colleges together.",
+    "amount": 150000,
+    "deadline": "2025-10-15",
+    "source": "Posse Foundation",
+    "type": "merit",
+    "eligibility": "High school senior, nominated by school or community-based organization, in a Posse city",
+    "applicationUrl": "https://www.possefoundation.org/"
+  },
+  {
+    "id": "horne-scholars",
+    "title": "Horatio Alger Scholarship",
+    "description": "Need-based scholarships for students who have overcome adversity. National and state programs; awards up to $25,000.",
+    "amount": 25000,
+    "deadline": "2025-10-25",
+    "source": "Horatio Alger Association",
+    "type": "need",
+    "eligibility": "High school senior, critical financial need, US citizen, 2.0+ GPA",
+    "applicationUrl": "https://www.horatioalger.org/scholarships/"
+  },
+  {
+    "id": "jack-kent-cooke",
+    "title": "Jack Kent Cooke Foundation College Scholarship",
+    "description": "Up to $55,000 per year for high-achieving high school seniors with financial need. Covers tuition, living expenses, books.",
+    "amount": 220000,
+    "deadline": "2025-11-20",
+    "source": "Jack Kent Cooke Foundation",
+    "type": "merit",
+    "eligibility": "High school senior, 3.5+ GPA, significant financial need, US citizen or permanent resident",
+    "applicationUrl": "https://www.jkcf.org/our-scholarships/college-scholarship-program/"
+  },
+  {
+    "id": "rmhc-hacer",
+    "title": "RMHC/HACER Scholarship",
+    "description": "Scholarships for Hispanic students. Over $1.7 million awarded annually through local RMHC chapters.",
+    "amount": 100000,
+    "deadline": "2025-01-20",
+    "source": "RMHC",
+    "type": "merit",
+    "eligibility": "High school senior, at least one parent of Hispanic heritage, US legal resident",
+    "applicationUrl": "https://www.rmhc.org/scholarships"
+  },
+  {
+    "id": "ted-rollins-eq-scholarship",
+    "title": "Equality Scholarship (EQ) by Ted Rollins",
+    "description": "Scholarship for students who have faced hardship and demonstrate resilience. Focus on first-generation and underrepresented students.",
+    "amount": 5000,
+    "deadline": "2025-06-01",
+    "source": "Campus Ventures",
+    "type": "need",
+    "eligibility": "Enrolled or enrolling in accredited US college, demonstrated financial need",
+    "applicationUrl": "https://www.campusventures.com/scholarship"
+  },
+  {
+    "id": "stamps-scholars",
+    "title": "Stamps Scholarship",
+    "description": "Merit-based full-ride scholarship at partner universities. Includes enrichment funds for study abroad, research, and leadership.",
+    "amount": 200000,
+    "deadline": "Varies by school",
+    "source": "Stamps Family Charitable Foundation",
+    "type": "merit",
+    "eligibility": "Apply through partner universities; typically top 1% of applicants",
+    "applicationUrl": "https://www.stampsfoundation.org/"
+  },
+  {
+    "id": "gillette-venus-grow-your-own",
+    "title": "Gillette Venus Grow Your Own Scholarship",
+    "description": "Scholarships for women pursuing education and growth. Multiple awards for undergraduate and graduate students.",
+    "amount": 5000,
+    "deadline": "2025-04-30",
+    "source": "Gillette Venus",
+    "type": "merit",
+    "eligibility": "Female-identifying, enrolled or enrolling in accredited US institution",
+    "applicationUrl": "https://www.venus.com/scholarship"
+  },
+  {
+    "id": "nursing-scholarship-aanp",
+    "title": "AANP Scholarship Program",
+    "description": "Scholarships for nurse practitioner students. Supports those pursuing NP certification and advanced practice.",
+    "amount": 2500,
+    "deadline": "2025-03-15",
+    "source": "American Association of Nurse Practitioners",
+    "type": "merit",
+    "eligibility": "Enrolled in accredited NP program, AANP member or applying",
+    "applicationUrl": "https://www.aanp.org/education/scholarships"
+  },
+  {
+    "id": "society-of-hispanic-engineers",
+    "title": "SHPE Scholarship Program",
+    "description": "Scholarships for Hispanic students in STEM. Multiple awards for undergraduate and graduate students.",
+    "amount": 15000,
+    "deadline": "2025-04-01",
+    "source": "Society of Hispanic Professional Engineers",
+    "type": "merit",
+    "eligibility": "Hispanic/Latino, pursuing STEM degree, SHPE member",
+    "applicationUrl": "https://www.shpe.org/scholarships"
+  },
+  {
+    "id": "nswcpa-education-foundation",
+    "title": "NSWCPA Education Foundation Scholarship",
+    "description": "Scholarships for accounting students. Supports undergraduate and graduate students pursuing CPA and accounting careers.",
+    "amount": 5000,
+    "deadline": "2025-05-01",
+    "source": "NSWCPA Education Foundation",
+    "type": "merit",
+    "eligibility": "Accounting major, enrolled in accredited program, NSWCPA member or eligible",
+    "applicationUrl": "https://www.nysscpa.org/education-foundation"
+  },
+  {
+    "id": "truman-scholarship",
+    "title": "Truman Scholarship",
+    "description": "$30,000 merit-based scholarship for college juniors committed to public service leadership. Up to 60 awards annually.",
+    "amount": 30000,
+    "deadline": "2025-02-04",
+    "source": "Harry S. Truman Scholarship Foundation",
+    "type": "merit",
+    "eligibility": "US citizen, college junior, nominated by institution, committed to public service",
+    "applicationUrl": "https://www.truman.gov/"
+  }
+]

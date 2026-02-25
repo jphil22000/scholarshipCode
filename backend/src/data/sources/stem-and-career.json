@@ -1,0 +1,167 @@
+[
+  {
+    "id": "nasa-internship-scholarship",
+    "title": "NASA OSSI Internships and Scholarships",
+    "description": "Paid internships and scholarship opportunities for students in STEM. Undergraduate and graduate students can apply for positions at NASA centers.",
+    "amount": 15000,
+    "deadline": "2025-03-01",
+    "source": "NASA",
+    "type": "merit",
+    "eligibility": "US citizen, enrolled in accredited institution, STEM major",
+    "applicationUrl": "https://intern.nasa.gov/"
+  },
+  {
+    "id": "swe-scholarship",
+    "title": "Society of Women Engineers Scholarship",
+    "description": "Multiple scholarships for women pursuing ABET-accredited engineering or computer science degrees. Over 300 awards annually.",
+    "amount": 15000,
+    "deadline": "2025-05-01",
+    "source": "Society of Women Engineers",
+    "type": "merit",
+    "eligibility": "Female, pursuing engineering or CS degree, SWE member",
+    "applicationUrl": "https://swe.org/scholarships/"
+  },
+  {
+    "id": "nsf-grfp",
+    "title": "NSF Graduate Research Fellowship",
+    "description": "Five-year fellowship for graduate students in STEM. $37,000 stipend per year plus education allowance.",
+    "amount": 148000,
+    "deadline": "2025-10-20",
+    "source": "National Science Foundation",
+    "type": "merit",
+    "eligibility": "US citizen or permanent resident, early-stage grad student in STEM",
+    "applicationUrl": "https://www.nsfgrfp.org/"
+  },
+  {
+    "id": "golden-key-ge-stem",
+    "title": "Golden Key GE Foundation STEM Scholarship",
+    "description": "Scholarships for Golden Key members in STEM. Multiple awards for undergraduate and graduate students.",
+    "amount": 2000,
+    "deadline": "2025-04-15",
+    "source": "Golden Key / GE Foundation",
+    "type": "merit",
+    "eligibility": "Golden Key member, STEM major, 3.5+ GPA",
+    "applicationUrl": "https://www.goldenkey.org/scholarships/"
+  },
+  {
+    "id": "google-generation-scholarship",
+    "title": "Google Generation Scholarship",
+    "description": "Scholarship for underrepresented students in computer science. $10,000 for undergrads in the US.",
+    "amount": 10000,
+    "deadline": "2025-04-05",
+    "source": "Google",
+    "type": "merit",
+    "eligibility": "Underrepresented in tech, pursuing CS or related, US or Canada",
+    "applicationUrl": "https://buildyourfuture.withgoogle.com/scholarships/generation-google-scholarship/"
+  },
+  {
+    "id": "microsoft-tuition-scholarship",
+    "title": "Microsoft Tuition Scholarship",
+    "description": "Tuition scholarship for students pursuing degrees in computer science and related technical fields. Focus on underrepresented groups.",
+    "amount": 12000,
+    "deadline": "2025-02-15",
+    "source": "Microsoft",
+    "type": "merit",
+    "eligibility": "Full-time student in CS or related field, 2.5+ GPA",
+    "applicationUrl": "https://careers.microsoft.com/students/scholarships"
+  },
+  {
+    "id": "sme-education-foundation",
+    "title": "SME Education Foundation Scholarships",
+    "description": "Scholarships for students pursuing manufacturing and engineering careers. Multiple awards for high school and college students.",
+    "amount": 50000,
+    "deadline": "2025-02-01",
+    "source": "SME Education Foundation",
+    "type": "merit",
+    "eligibility": "Pursuing manufacturing/engineering, US or Canada, 2.0+ GPA",
+    "applicationUrl": "https://www.smeef.org/scholarships"
+  },
+  {
+    "id": "aaas-entry-point",
+    "title": "AAAS Entry Point Internship",
+    "description": "Paid internships for students with disabilities in STEM. Partner employers include NASA, NIH, and major corporations.",
+    "amount": 0,
+    "deadline": "2025-03-15",
+    "source": "AAAS",
+    "type": "merit",
+    "eligibility": "Student with disability, pursuing STEM, US citizen",
+    "applicationUrl": "https://www.aaas.org/programs/entry-point"
+  },
+  {
+    "id": "autism-scholarship-oiar",
+    "title": "OAR Scholarship Program",
+    "description": "Scholarships for students on the autism spectrum. Awards for undergraduate and graduate students pursuing any field.",
+    "amount": 3000,
+    "deadline": "2025-05-01",
+    "source": "Organization for Autism Research",
+    "type": "merit",
+    "eligibility": "Diagnosed autism spectrum, enrolled or enrolling in accredited institution",
+    "applicationUrl": "https://researchautism.org/scholarships/"
+  },
+  {
+    "id": "hispanic-scholarship-fund",
+    "title": "Hispanic Scholarship Fund",
+    "description": "Scholarships for Hispanic students. Multiple awards for undergraduate and graduate students in any major.",
+    "amount": 5000,
+    "deadline": "2025-02-15",
+    "source": "Hispanic Scholarship Fund",
+    "type": "merit",
+    "eligibility": "Hispanic heritage, US citizen or DACA, 3.0+ GPA, full-time student",
+    "applicationUrl": "https://www.hsf.net/"
+  },
+  {
+    "id": "uncf-scholarships",
+    "title": "UNCF Scholarships",
+    "description": "Multiple scholarships for African American students. Supports HBCU and other students in any major.",
+    "amount": 10000,
+    "deadline": "2025-03-15",
+    "source": "UNCF",
+    "type": "merit",
+    "eligibility": "African American, US citizen, enrolled at UNCF member or other accredited school",
+    "applicationUrl": "https://uncf.org/scholarships"
+  },
+  {
+    "id": "catching-the-dream",
+    "title": "Catching the Dream Scholarship",
+    "description": "Scholarships for Native American students. Supports undergraduate and graduate students in any field.",
+    "amount": 5000,
+    "deadline": "2025-03-15",
+    "source": "Catching the Dream",
+    "type": "merit",
+    "eligibility": "Enrolled member of federally recognized tribe, 3.0+ GPA",
+    "applicationUrl": "https://catchingthedream.org/"
+  },
+  {
+    "id": "point-foundation",
+    "title": "Point Foundation Scholarship",
+    "description": "Scholarships for LGBTQ+ students. Financial support plus leadership programming and mentorship.",
+    "amount": 10000,
+    "deadline": "2025-01-30",
+    "source": "Point Foundation",
+    "type": "merit",
+    "eligibility": "LGBTQ+ identifying, enrolled or enrolling in accredited US institution",
+    "applicationUrl": "https://pointfoundation.org/point-scholarship/"
+  },
+  {
+    "id": "daad-study-scholarship",
+    "title": "DAAD Study Scholarship",
+    "description": "Funding for US and Canadian students to study or research in Germany. Graduate and undergraduate programs.",
+    "amount": 12000,
+    "deadline": "2025-11-04",
+    "source": "DAAD",
+    "type": "merit",
+    "eligibility": "US or Canadian citizen, enrolled in or accepted to degree program",
+    "applicationUrl": "https://www.daad.org/en/study-and-research-in-germany/scholarships/"
+  },
+  {
+    "id": "fulbright-us-student",
+    "title": "Fulbright US Student Program",
+    "description": "Research or teaching assistantship abroad. Covers travel, living, and project expenses in over 140 countries.",
+    "amount": 0,
+    "deadline": "2025-10-08",
+    "source": "Fulbright",
+    "type": "merit",
+    "eligibility": "US citizen, bachelor's degree or equivalent by start of grant",
+    "applicationUrl": "https://us.fulbrightonline.org/"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "rhodes-scholarship",
+    "title": "Rhodes Scholarship",
+    "description": "Full funding for 2–3 years of study at the University of Oxford. One of the oldest international scholarship programs.",
+    "amount": 150000,
+    "deadline": "2025-10-01",
+    "source": "Rhodes Trust",
+    "type": "merit",
+    "eligibility": "US citizen, age 18–24, bachelor's by October of award year",
+    "applicationUrl": "https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/"
+  },
+  {
+    "id": "marshall-scholarship",
+    "title": "Marshall Scholarship",
+    "description": "Full funding for US students to study at any UK university. Up to 50 awards annually.",
+    "amount": 100000,
+    "deadline": "2025-09-01",
+    "source": "Marshall Aid Commemoration Commission",
+    "type": "merit",
+    "eligibility": "US citizen, undergraduate degree, 3.7+ GPA",
+    "applicationUrl": "https://www.marshallscholarship.org/"
+  },
+  {
+    "id": "rotary-global-grant",
+    "title": "Rotary Global Grant",
+    "description": "Graduate-level funding for study abroad in one of Rotary's six focus areas. Awards vary by district.",
+    "amount": 30000,
+    "deadline": "Varies by district",
+    "source": "Rotary Foundation",
+    "type": "merit",
+    "eligibility": "Contact local Rotary club; graduate study aligned with focus areas",
+    "applicationUrl": "https://www.rotary.org/en/our-programs/scholarships"
+  },
+  {
+    "id": "boren-fellowship",
+    "title": "Boren Fellowship",
+    "description": "Funding for graduate students to study less commonly taught languages in world regions critical to US interests.",
+    "amount": 24000,
+    "deadline": "2025-01-30",
+    "source": "Boren Awards",
+    "type": "merit",
+    "eligibility": "US citizen, graduate student, study in approved country",
+    "applicationUrl": "https://www.borenawards.org/"
+  },
+  {
+    "id": "pickering-fellowship",
+    "title": "Thomas R. Pickering Foreign Affairs Fellowship",
+    "description": "Funded graduate program and pathway to Foreign Service. Covers tuition and includes internships.",
+    "amount": 50000,
+    "deadline": "2025-09-15",
+    "source": "US Department of State",
+    "type": "merit",
+    "eligibility": "US citizen, seeking graduate degree, interested in Foreign Service",
+    "applicationUrl": "https://pickeringfellowship.org/"
+  }
+]

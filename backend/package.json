@@ -1,0 +1,22 @@
+{
+  "name": "scholarship-backend",
+  "version": "1.0.0",
+  "description": "AWS Lambda backend for scholarship finder",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "sam build && sam deploy",
+    "test": "node test.js",
+    "local": "sam local start-api"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.490.0",
+    "@aws-sdk/client-dynamodb": "^3.490.0",
+    "@aws-sdk/lib-dynamodb": "^3.490.0",
+    "axios": "^1.6.7",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130"
+  }
+}

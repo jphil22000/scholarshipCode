@@ -1,0 +1,13 @@
+# Copy this file to samconfig.toml and run: sam deploy --guided
+# Or run once: sam deploy --guided (SAM will create samconfig.toml for you)
+#
+# version = 0.1
+# [default.deploy.parameters]
+# stack_name = "scholarship-finder"
+# region = "us-east-1"
+# confirm_changeset = true
+# capabilities = "CAPABILITY_IAM"
+# parameter_overrides = ""
+# s3_prefix = "scholarship-finder"
+# s3_bucket = "your-bucket-name"
+# resolve_s3 = true

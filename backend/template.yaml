@@ -1,0 +1,367 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Scholarship Finder API
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs20.x
+    Environment:
+      Variables:
+        SCHOLARSHIPS_TABLE: !Ref ScholarshipsTable
+        APPLICATIONS_TABLE: !Ref ApplicationsTable
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: scholarship-finder-users
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: false
+        - Name: name
+          Required: false
+          Mutable: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref UserPool
+      Domain: scholarship-finder-ui
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: WebsiteDistribution
+    Properties:
+      ClientName: scholarship-finder-web
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      PreventUserExistenceErrors: ENABLED
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+      CallbackURLs:
+        - !Sub 'https://${WebsiteDistribution.DomainName}/callback'
+        - 'http://localhost:3000/callback'
+      LogoutURLs:
+        - !Sub 'https://${WebsiteDistribution.DomainName}'
+        - 'http://localhost:3000'
+
+  # SPA / Hosted UI client: no secret (browser cannot send SECRET_HASH). Use this client ID in the frontend (VITE_COGNITO_CLIENT_ID).
+  UserPoolClientSpa:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: WebsiteDistribution
+    Properties:
+      ClientName: scholarship-finder-spa
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      PreventUserExistenceErrors: ENABLED
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+      CallbackURLs:
+        - !Sub 'https://${WebsiteDistribution.DomainName}/callback'
+        - 'http://localhost:3000/callback'
+      LogoutURLs:
+        - !Sub 'https://${WebsiteDistribution.DomainName}'
+        - 'http://localhost:3000'
+
+  ScholarshipsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Scholarships
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  ApplicationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Applications
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  ProfilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Profiles
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+
+  ScholarshipApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+        AllowOrigin: "'*'"
+
+  SearchScholarshipsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/searchScholarships.handler
+      CodeUri: ./
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ScholarshipsTable
+      Events:
+        SearchApi:
+          Type: Api
+          Properties:
+            Path: /scholarships/search
+            Method: post
+            RestApiId: !Ref ScholarshipApi
+
+  AISearchScholarshipsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/aiSearchScholarships.handler
+      CodeUri: ./
+      Timeout: 60
+      Environment:
+        Variables:
+          TAVILY_API_KEY: ""
+          BEDROCK_MODEL_ID: "anthropic.claude-3-haiku-20240307-v1:0"
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: bedrock:InvokeModel
+              Resource: '*'
+      Events:
+        AISearchApi:
+          Type: Api
+          Properties:
+            Path: /scholarships/ai-search
+            Method: post
+            RestApiId: !Ref ScholarshipApi
+
+  GetScholarshipFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getScholarship.handler
+      CodeUri: ./
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ScholarshipsTable
+      Events:
+        GetApi:
+          Type: Api
+          Properties:
+            Path: /scholarships/{id}
+            Method: get
+            RestApiId: !Ref ScholarshipApi
+
+  SyncScholarshipsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/syncScholarships.handler
+      CodeUri: ./
+      Timeout: 60
+      Environment:
+        Variables:
+          # Optional: add keys in Lambda console to pull from external APIs
+          SCHOLARSHIPOWL_API_KEY: ""
+          DATA_GOV_API_KEY: ""
+          SCHOLARSHIP_API_URL: ""
+          SCHOLARSHIP_API_KEY: ""
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ScholarshipsTable
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+            Description: Sync scholarships from curated data into DynamoDB daily
+
+  ApplicationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/applications.handler
+      CodeUri: ./
+      Events:
+        ListApi:
+          Type: Api
+          Properties:
+            Path: /applications
+            Method: get
+            RestApiId: !Ref ScholarshipApi
+        CreateApi:
+          Type: Api
+          Properties:
+            Path: /applications
+            Method: post
+            RestApiId: !Ref ScholarshipApi
+
+  ApplicationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/application.handler
+      CodeUri: ./
+      Events:
+        UpdateApi:
+          Type: Api
+          Properties:
+            Path: /applications/{id}
+            Method: put
+            RestApiId: !Ref ScholarshipApi
+        DeleteApi:
+          Type: Api
+          Properties:
+            Path: /applications/{id}
+            Method: delete
+            RestApiId: !Ref ScholarshipApi
+
+  # Static website: S3 + CloudFront
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'scholarship-finder-website-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  WebsiteOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: scholarship-finder-website-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  WebsiteDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          - Id: S3Website
+            DomainName: !GetAtt WebsiteBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt WebsiteOAC.Id
+        DefaultCacheBehavior:
+          TargetOriginId: S3Website
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized (managed)
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          Compress: true
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+        PriceClass: PriceClass_100
+
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    DependsOn: WebsiteDistribution
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipal
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${WebsiteBucket}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${WebsiteDistribution}'
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${ScholarshipApi}.execute-api.${AWS::Region}.amazonaws.com/prod/'
+  UserPoolId:
+    Description: Cognito User Pool ID for frontend auth
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Description: Cognito App Client ID (legacy; use SPA client for Hosted UI if you see SECRET_HASH error)
+    Value: !Ref UserPoolClient
+  UserPoolClientSpaId:
+    Description: Cognito App Client ID for SPA / Hosted UI (no secret). Set VITE_COGNITO_CLIENT_ID to this for CloudFront.
+    Value: !Ref UserPoolClientSpa
+  CognitoOAuthDomain:
+    Description: Cognito Hosted UI domain for OAuth (use in VITE_COGNITO_OAUTH_DOMAIN)
+    Value: !Sub 'scholarship-finder-ui.auth.${AWS::Region}.amazoncognito.com'
+  ScholarshipsTableName:
+    Description: Scholarships DynamoDB Table
+    Value: !Ref ScholarshipsTable
+  ApplicationsTableName:
+    Description: Applications DynamoDB Table
+    Value: !Ref ApplicationsTable
+  ProfilesTableName:
+    Description: Profiles DynamoDB Table (About You data)
+    Value: !Ref ProfilesTable
+  WebsiteBucket:
+    Description: S3 bucket for static website assets (upload dist/ here)
+    Value: !Ref WebsiteBucket
+  WebsiteURL:
+    Description: CloudFront URL for the website
+    Value: !Sub 'https://${WebsiteDistribution.DomainName}'
+  CloudFrontDistributionId:
+    Description: CloudFront distribution ID (for cache invalidation)
+    Value: !Ref WebsiteDistribution
