@@ -51,7 +51,12 @@ async function getUserId(req) {
   const token = auth.slice(7)
   try {
     const jwks = getCognitoJwks()
-    if (!jwks) return null
+    if (!jwks) {
+      if (!COGNITO_ISSUER_URL || !COGNITO_CLIENT_ID) {
+        console.warn('Profile API: set COGNITO_ISSUER_URL and COGNITO_CLIENT_ID in .env (same as VITE_COGNITO_*) to verify Bearer token')
+      }
+      return null
+    }
     const { payload } = await jose.jwtVerify(token, jwks, {
       issuer: COGNITO_ISSUER_URL,
       audience: COGNITO_CLIENT_ID,
@@ -94,11 +99,12 @@ app.get('/api/me', (req, res) => {
   res.json({ isAuthenticated: false })
 })
 
-// Profile API (DynamoDB) – requires auth via session or Bearer token
+// Profile API (DynamoDB only) – requires auth via session or Bearer token
 app.get('/api/profile', async (req, res) => {
   const userId = await getUserId(req)
   if (!userId) return res.status(401).json({ error: 'Not authenticated' })
-  if (!PROFILES_TABLE) return res.status(503).json({ error: 'Profile storage not configured. Set PROFILES_TABLE.' })
+  if (!PROFILES_TABLE) return res.status(503).json({ error: 'Profile storage not configured. Set PROFILES_TABLE in .env.' })
+  res.setHeader('Cache-Control', 'no-store')
   try {
     const { Item } = await docClient.send(new GetCommand({
       TableName: PROFILES_TABLE,
@@ -114,9 +120,10 @@ app.get('/api/profile', async (req, res) => {
 app.put('/api/profile', express.json(), async (req, res) => {
   const userId = await getUserId(req)
   if (!userId) return res.status(401).json({ error: 'Not authenticated' })
-  if (!PROFILES_TABLE) return res.status(503).json({ error: 'Profile storage not configured. Set PROFILES_TABLE.' })
+  if (!PROFILES_TABLE) return res.status(503).json({ error: 'Profile storage not configured. Set PROFILES_TABLE in .env.' })
+  res.setHeader('Cache-Control', 'no-store')
+  const profile = req.body || {}
   try {
-    const profile = req.body || {}
     await docClient.send(new PutCommand({
       TableName: PROFILES_TABLE,
       Item: {
@@ -249,7 +256,7 @@ app.listen(PORT, () => {
     console.log(`Login: http://localhost:${PORT}/login`)
   }
   if (!PROFILES_TABLE) {
-    console.warn('PROFILES_TABLE is not set – About You profile will not save to DynamoDB. Set PROFILES_TABLE in .env and deploy the backend (Profiles table).')
+    console.warn('PROFILES_TABLE is not set – About You will not save. Set PROFILES_TABLE in .env and ensure AWS credentials are configured.')
   } else {
     console.log(`Profile storage: DynamoDB table "${PROFILES_TABLE}"`)
   }

@@ -33,7 +33,11 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = null
     try {
-      await signIn({ username: email, password })
+      await signIn({
+        username: email,
+        password,
+        options: { authFlowType: 'USER_PASSWORD_AUTH' },
+      })
       await loadSession()
       return true
     } catch (err) {

@@ -36,6 +36,10 @@
           />
         </div>
 
+        <p v-if="!hasHostedUI" class="forgot-link">
+          <router-link to="/forgot-password">Forgot password?</router-link>
+        </p>
+
         <button type="submit" class="submit-btn" :disabled="auth.loading">
           {{ auth.loading ? 'Signing in…' : 'Sign In' }}
         </button>
@@ -69,6 +73,10 @@ const redirecting = ref(false)
 const hasHostedUI = computed(() => !!oauthDomain)
 
 onMounted(async () => {
+  if (auth.isAuthenticated) {
+    router.replace('/about-you')
+    return
+  }
   if (!hasHostedUI.value) return
   redirecting.value = true
   auth.error = null
@@ -82,17 +90,30 @@ onMounted(async () => {
 
 async function handleSubmit() {
   auth.error = null
+  if (auth.isAuthenticated) {
+    router.replace('/about-you')
+    return
+  }
   try {
     await auth.login(email.value, password.value)
-    await profileStore.getProfile()
-    const redirect = router.currentRoute.value.query.redirect
-    if (!profileStore.hasProfile) {
-      router.replace(redirect === '/about-you' ? '/about-you' : { path: '/about-you', query: redirect ? { redirect } : {} })
-    } else {
-      router.replace(redirect || '/')
+    try {
+      await profileStore.getProfile()
+    } catch {
+      // Profile load failed; still navigate to Profile page
     }
-  } catch {
-    // error set in store
+    // After sign-in, always take user to Profile (About You) page
+    router.replace('/about-you')
+  } catch (err) {
+    const msg = (err?.message || auth.error || '').toLowerCase()
+    const isUnconfirmed = msg.includes('not confirmed') || msg.includes('user is not confirmed')
+    if (isUnconfirmed && email.value) {
+      router.replace({ path: '/confirm', query: { email: email.value } })
+      return
+    }
+    if (auth.isAuthenticated || msg.includes('already a signed in user')) {
+      auth.error = null
+      router.replace('/about-you')
+    }
   }
 }
 </script>
@@ -201,6 +222,21 @@ async function handleSubmit() {
 }
 
 .signup-link a:hover {
+  text-decoration: underline;
+}
+
+.forgot-link {
+  margin-top: -0.25rem;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.forgot-link a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.forgot-link a:hover {
   text-decoration: underline;
 }
 </style>

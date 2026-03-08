@@ -1,27 +1,26 @@
 <template>
   <div id="app">
-    <nav v-if="isSignedIn" class="navbar">
+    <nav class="navbar">
       <div class="container">
         <h1 class="logo">🎓 Scholarship Finder</h1>
         <div class="nav-links">
           <router-link to="/">Home</router-link>
-          <router-link to="/search">Search</router-link>
-          <router-link to="/about-you">About You</router-link>
-          <router-link to="/applications">My Applications</router-link>
-          <!-- Server session (Hosted UI): when /api/me returns user -->
-          <template v-if="serverUser">
+          <router-link to="/about-us">About Us</router-link>
+          <template v-if="isSignedIn">
+            <router-link to="/search">Search</router-link>
+            <router-link to="/about-you">About You</router-link>
+            <router-link to="/applications">My Applications</router-link>
             <span class="nav-plan" :class="profileStore.plan">{{ profileStore.plan }}</span>
-            <span class="nav-user">{{ serverUser.email || serverUser.username || 'User' }}</span>
-            <a href="/logout" class="nav-btn">Sign Out</a>
-          </template>
-          <!-- Amplify (client-side) auth when not on auth server -->
-          <template v-else-if="hasCognito && auth.isAuthenticated">
-            <span class="nav-plan" :class="profileStore.plan">{{ profileStore.plan }}</span>
-            <span class="nav-user">{{ auth.user?.signInDetails?.loginId ?? 'User' }}</span>
-            <button type="button" class="nav-btn" @click="auth.logout()">Sign Out</button>
+            <span class="nav-user">{{ userDisplayName }}</span>
+            <template v-if="serverUser">
+              <a href="/logout" class="nav-btn">Sign Out</a>
+            </template>
+            <template v-else>
+              <button type="button" class="nav-btn" @click="handleSignOut">Sign Out</button>
+            </template>
           </template>
           <template v-else>
-            <a href="/login" class="nav-signin">Sign In</a>
+            <router-link to="/signin" class="nav-signin">Sign In</router-link>
           </template>
         </div>
       </div>
@@ -33,34 +32,52 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, provide } from 'vue'
-import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { computed, ref, onMounted, provide, watch } from 'vue'
+import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useAuthStore } from './stores/auth'
 import { useProfileStore } from './stores/profile'
 
 const auth = useAuthStore()
+const { user: authUser } = storeToRefs(auth)
 const router = useRouter()
+const route = useRoute()
 const profileStore = useProfileStore()
 const hasCognito = computed(() => !!import.meta.env.VITE_COGNITO_USER_POOL_ID)
 const serverUser = ref(null)
-/** True when we got a response from /api/me (we're on the Node auth server) */
-const onAuthServer = ref(false)
-// Only show nav when signed in. On auth server, trust server session only; otherwise allow Amplify.
+// Protected paths: only reachable when guard allows (so user is signed in)
+const protectedPaths = ['/search', '/about-you', '/applications']
+const isOnProtectedPath = computed(() =>
+  protectedPaths.includes(route.path) || route.path.startsWith('/scholarship/')
+)
+// Signed in: server session, Cognito user, or we're on a protected path (guard already let us through)
 const isSignedIn = computed(() => {
-  if (onAuthServer.value) return !!serverUser.value
-  return !!serverUser.value || (hasCognito.value && auth.isAuthenticated)
+  if (!!serverUser.value) return true
+  if (hasCognito.value && !!authUser.value) return true
+  return isOnProtectedPath.value
 })
+
+const userDisplayName = computed(() => {
+  if (serverUser.value) return serverUser.value.email || serverUser.value.username || 'User'
+  if (authUser.value?.signInDetails?.loginId) return authUser.value.signInDetails.loginId
+  return 'User'
+})
+
+async function handleSignOut() {
+  await auth.logout()
+  serverUser.value = null
+  router.replace('/')
+}
 
 onMounted(async () => {
   try {
     const res = await fetch('/api/me', { credentials: 'include' })
-    onAuthServer.value = res.ok
     if (res.ok) {
       const data = await res.json()
       if (data.isAuthenticated && data.userInfo) {
         serverUser.value = data.userInfo
         await profileStore.getProfile()
-        if (router.currentRoute.value.path === '/' && !profileStore.hasProfile) {
+        if (router.currentRoute.value.path === '/') {
           router.replace('/about-you')
         }
       }
@@ -72,12 +89,17 @@ onMounted(async () => {
     await auth.loadSession()
     if (auth.isAuthenticated) {
       await profileStore.getProfile()
-      if (router.currentRoute.value.path === '/' && !profileStore.hasProfile) {
+      if (router.currentRoute.value.path === '/') {
         router.replace('/about-you')
       }
     }
   }
 })
+
+// Refresh Cognito session on navigation so nav always shows correct signed-in state
+watch(() => route.path, () => {
+  if (hasCognito.value) auth.loadSession()
+}, { immediate: true })
 
 provide('isSignedIn', isSignedIn)
 

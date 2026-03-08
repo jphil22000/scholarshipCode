@@ -6,8 +6,10 @@ import Applications from '../views/Applications.vue'
 import SignIn from '../views/SignIn.vue'
 import SignUp from '../views/SignUp.vue'
 import ConfirmSignUp from '../views/ConfirmSignUp.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
 import Callback from '../views/Callback.vue'
 import AboutYou from '../views/AboutYou.vue'
+import AboutUs from '../views/AboutUs.vue'
 import { useAuthStore } from '../stores/auth'
 import { useProfileStore } from '../stores/profile'
 
@@ -55,6 +57,11 @@ const routes = [
     component: ConfirmSignUp
   },
   {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword
+  },
+  {
     path: '/callback',
     name: 'Callback',
     component: Callback
@@ -64,6 +71,15 @@ const routes = [
     name: 'AboutYou',
     component: AboutYou,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/about-us',
+    name: 'AboutUs',
+    component: AboutUs
+  },
+  {
+    path: '/contact',
+    redirect: { name: 'AboutUs' }
   }
 ]
 
@@ -78,35 +94,34 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
-  // Prefer server session (Hosted UI): when served from Node, /api/me returns session
-  try {
-    const res = await fetch('/api/me', { credentials: 'include' })
-    if (res.ok) {
-      const data = await res.json()
-      if (data.isAuthenticated) {
-        next()
-        return
-      }
-      // Server session exists but not authenticated → redirect to Hosted UI login
-      window.location.href = '/login'
-      return
-    }
-  } catch {
-    // /api/me not available (e.g. Vite dev server) → fall through to Amplify
-  }
-
-  // Amplify (client-side) auth when not using Hosted UI
+  // Check Amplify (Cognito) first so client-side login works; /api/me can 304 or have no session
   const store = useAuthStore()
   const hasCognito = !!import.meta.env.VITE_COGNITO_USER_POOL_ID
   if (hasCognito) {
-    if (!store.user) await store.loadSession()
-    if (store.isAuthenticated) {
-      next()
-      return
+    try {
+      if (!store.user) await store.loadSession()
+      if (store.isAuthenticated) {
+        next()
+        return
+      }
+    } catch {
+      // loadSession failed – fall through
     }
   }
 
-  // Not authenticated – redirect to sign in
+  try {
+    const res = await fetch('/api/me', { credentials: 'include' })
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}))
+      if (data && data.isAuthenticated) {
+        next()
+        return
+      }
+    }
+  } catch {
+    // /api/me not available or failed
+  }
+
   next({ name: 'SignIn', query: { redirect: to.fullPath } })
 })
 

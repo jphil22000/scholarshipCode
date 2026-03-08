@@ -23,7 +23,7 @@ function goHome() {
 }
 
 onMounted(async () => {
-  const redirect = router.currentRoute.value.query.redirect || '/'
+  const redirect = router.currentRoute.value.query.redirect || '/about-you'
   const maxWait = 5000
   const step = 200
   let waited = 0
@@ -34,7 +34,11 @@ onMounted(async () => {
     waited += step
   }
   if (auth.isAuthenticated) {
-    await profileStore.getProfile()
+    try {
+      await profileStore.getProfile()
+    } catch {
+      // Profile load failed; still go to Profile page
+    }
     status.value = 'done'
     setTimeout(() => router.replace(redirect), 300)
   } else {

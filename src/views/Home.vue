@@ -4,7 +4,7 @@
       <h1>Find Your Perfect Scholarship</h1>
       <p class="subtitle">Search thousands of college scholarships and get help applying to them</p>
       <div v-if="!isSignedIn" class="hero-actions">
-        <a href="/login" class="cta-button">Sign In</a>
+        <router-link to="/signin" class="cta-button">Sign In</router-link>
       </div>
     </div>
 
@@ -60,7 +60,7 @@
             <li>Priority support</li>
             <li>Export to PDF</li>
           </ul>
-          <a href="/login" class="plan-cta">Sign in to upgrade</a>
+          <router-link to="/signin" class="plan-cta">Sign in to upgrade</router-link>
         </div>
       </div>
     </section>

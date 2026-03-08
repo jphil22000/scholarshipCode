@@ -28,6 +28,10 @@ async function getAuthHeaders() {
     const { useAuthStore } = await import('./auth')
     const auth = useAuthStore()
     if (auth?.idToken) return { Authorization: `Bearer ${auth.idToken}` }
+    if (auth?.isAuthenticated && !auth?.idToken) {
+      await auth.loadSession()
+      if (auth.idToken) return { Authorization: `Bearer ${auth.idToken}` }
+    }
   } catch {
     // auth store not ready or no Cognito
   }

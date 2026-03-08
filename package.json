@@ -8,6 +8,7 @@
     "dev": "vite",
     "dev:server": "node server.js",
     "dev:all": "concurrently \"npm run dev:server\" \"npm run dev\"",
+    "dev:full": "concurrently \"npm start\" \"npm run dev\"",
     "build": "vite build",
     "preview": "vite preview",
     "lambda:deploy": "cd backend && npm run deploy",
