@@ -10,6 +10,7 @@ import ForgotPassword from '../views/ForgotPassword.vue'
 import Callback from '../views/Callback.vue'
 import AboutYou from '../views/AboutYou.vue'
 import AboutUs from '../views/AboutUs.vue'
+import AdminDashboard from '../views/AdminDashboard.vue'
 import { useAuthStore } from '../stores/auth'
 import { useProfileStore } from '../stores/profile'
 
@@ -80,6 +81,12 @@ const routes = [
   {
     path: '/contact',
     redirect: { name: 'AboutUs' }
+  },
+  {
+    path: '/admin',
+    name: 'AdminDashboard',
+    component: AdminDashboard,
+    meta: { requiresAuth: true, requiresAdmin: true }
   }
 ]
 
@@ -89,18 +96,26 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, _from, next) => {
-  if (!to.meta.requiresAuth) {
+  if (!to.meta.requiresAuth && !to.meta.requiresAdmin) {
     next()
     return
   }
 
-  // Check Amplify (Cognito) first so client-side login works; /api/me can 304 or have no session
-  const store = useAuthStore()
+  const authStore = useAuthStore()
+  const profileStore = useProfileStore()
   const hasCognito = !!import.meta.env.VITE_COGNITO_USER_POOL_ID
+
   if (hasCognito) {
     try {
-      if (!store.user) await store.loadSession()
-      if (store.isAuthenticated) {
+      if (!authStore.user) await authStore.loadSession()
+      if (authStore.isAuthenticated) {
+        if (to.meta.requiresAdmin) {
+          await profileStore.getProfile()
+          if (!profileStore.isAdmin) {
+            next({ path: '/' })
+            return
+          }
+        }
         next()
         return
       }
@@ -114,6 +129,13 @@ router.beforeEach(async (to, _from, next) => {
     if (res.ok) {
       const data = await res.json().catch(() => ({}))
       if (data && data.isAuthenticated) {
+        if (to.meta.requiresAdmin) {
+          await profileStore.getProfile()
+          if (!profileStore.isAdmin) {
+            next({ path: '/' })
+            return
+          }
+        }
         next()
         return
       }
@@ -122,7 +144,11 @@ router.beforeEach(async (to, _from, next) => {
     // /api/me not available or failed
   }
 
-  next({ name: 'SignIn', query: { redirect: to.fullPath } })
+  if (to.meta.requiresAuth || to.meta.requiresAdmin) {
+    next({ name: 'SignIn', query: { redirect: to.fullPath } })
+    return
+  }
+  next()
 })
 
 export default router

@@ -10,6 +10,7 @@
             <router-link to="/search">Search</router-link>
             <router-link to="/about-you">About You</router-link>
             <router-link to="/applications">My Applications</router-link>
+            <router-link v-if="profileStore.isAdmin" to="/admin">Admin</router-link>
             <span class="nav-plan" :class="profileStore.plan">{{ profileStore.plan }}</span>
             <span class="nav-user">{{ userDisplayName }}</span>
             <template v-if="serverUser">
@@ -59,6 +60,11 @@ const isSignedIn = computed(() => {
 
 const userDisplayName = computed(() => {
   if (serverUser.value) return serverUser.value.email || serverUser.value.username || 'User'
+  const p = profileStore.profile?.value ?? profileStore.profile
+  if (p?.firstName?.trim()) return p.lastName?.trim() ? `${p.firstName.trim()} ${p.lastName.trim()}` : p.firstName.trim()
+  if (p?.email?.trim()) return p.email.trim()
+  const email = auth.userEmail?.value ?? auth.userEmail
+  if (email && typeof email === 'string') return email
   if (authUser.value?.signInDetails?.loginId) return authUser.value.signInDetails.loginId
   return 'User'
 })

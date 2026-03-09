@@ -2,6 +2,12 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Scholarship Finder API
 
+Parameters:
+  FirstAdminEmail:
+    Type: String
+    Default: ''
+    Description: Email of the first admin; this user becomes admin on first profile load.
+
 Globals:
   Function:
     Timeout: 30
@@ -42,6 +48,7 @@ Resources:
       UserPoolId: !Ref UserPool
       Domain: scholarship-finder-ui
 
+  # First app client: often gets Managed Hosted UI style; use this client ID for Hosted UI in production to avoid unauthorized_client.
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     DependsOn: WebsiteDistribution
@@ -61,6 +68,9 @@ Resources:
         - openid
         - email
         - profile
+      SupportedIdentityProviders:
+        - COGNITO
+      DefaultRedirectURI: !Sub 'https://${WebsiteDistribution.DomainName}/callback'
       CallbackURLs:
         - !Sub 'https://${WebsiteDistribution.DomainName}/callback'
         - 'http://localhost:3000/callback'
@@ -88,6 +98,9 @@ Resources:
         - openid
         - email
         - profile
+      SupportedIdentityProviders:
+        - COGNITO
+      DefaultRedirectURI: !Sub 'https://${WebsiteDistribution.DomainName}/callback'
       CallbackURLs:
         - !Sub 'https://${WebsiteDistribution.DomainName}/callback'
         - 'http://localhost:3000/callback'
@@ -129,6 +142,18 @@ Resources:
           AttributeType: S
       KeySchema:
         - AttributeName: userId
+          KeyType: HASH
+
+  ErrorsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Errors
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
           KeyType: HASH
 
   ScholarshipApi:
@@ -257,6 +282,75 @@ Resources:
             Method: delete
             RestApiId: !Ref ScholarshipApi
 
+  ProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/profile.handler
+      CodeUri: ./
+      Environment:
+        Variables:
+          PROFILES_TABLE: !Ref ProfilesTable
+          COGNITO_ISSUER_URL: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}'
+          COGNITO_CLIENT_ID: !Ref UserPoolClientSpa
+          COGNITO_HOSTED_UI_CLIENT_ID: !Ref UserPoolClient
+          FIRST_ADMIN_EMAIL: !Ref FirstAdminEmail
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProfilesTable
+      Events:
+        GetProfileApi:
+          Type: Api
+          Properties:
+            Path: /profile
+            Method: get
+            RestApiId: !Ref ScholarshipApi
+        PutProfileApi:
+          Type: Api
+          Properties:
+            Path: /profile
+            Method: put
+            RestApiId: !Ref ScholarshipApi
+
+  AdminFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/admin.handler
+      CodeUri: ./
+      Environment:
+        Variables:
+          PROFILES_TABLE: !Ref ProfilesTable
+          APPLICATIONS_TABLE: !Ref ApplicationsTable
+          ERRORS_TABLE: !Ref ErrorsTable
+          COGNITO_ISSUER_URL: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}'
+          COGNITO_CLIENT_ID: !Ref UserPoolClientSpa
+          COGNITO_HOSTED_UI_CLIENT_ID: !Ref UserPoolClient
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProfilesTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref ApplicationsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref ErrorsTable
+      Events:
+        AdminStatsApi:
+          Type: Api
+          Properties:
+            Path: /admin/stats
+            Method: get
+            RestApiId: !Ref ScholarshipApi
+        AdminErrorsApi:
+          Type: Api
+          Properties:
+            Path: /admin/errors
+            Method: get
+            RestApiId: !Ref ScholarshipApi
+        AdminPromoteApi:
+          Type: Api
+          Properties:
+            Path: /admin/promote
+            Method: post
+            RestApiId: !Ref ScholarshipApi
+
   # Static website: S3 + CloudFront
   WebsiteBucket:
     Type: AWS::S3::Bucket
@@ -356,6 +450,9 @@ Outputs:
   ProfilesTableName:
     Description: Profiles DynamoDB Table (About You data)
     Value: !Ref ProfilesTable
+  ErrorsTableName:
+    Description: Errors DynamoDB Table (admin error tracking)
+    Value: !Ref ErrorsTable
   WebsiteBucket:
     Description: S3 bucket for static website assets (upload dist/ here)
     Value: !Ref WebsiteBucket

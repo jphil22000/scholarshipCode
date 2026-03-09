@@ -21,4 +21,22 @@ axios.interceptors.request.use((config) => {
   return config
 })
 
+// Log uncaught errors to admin error tracking (fire-and-forget)
+const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+app.config.errorHandler = (err, instance, info) => {
+  console.error(err, info)
+  const url = apiBase ? `${apiBase}/errors` : '/api/errors'
+  const payload = {
+    message: err?.message || String(err),
+    stack: err?.stack,
+    url: typeof window !== 'undefined' ? window.location.href : null,
+    context: { info },
+  }
+  const auth = useAuthStore()
+  const token = auth?.idToken?.value ?? auth?.idToken
+  const headers = { 'Content-Type': 'application/json', Accept: 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
+  fetch(url, { method: 'POST', credentials: 'include', headers, body: JSON.stringify(payload) }).catch(() => {})
+}
+
 app.mount('#app')

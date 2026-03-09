@@ -11,7 +11,7 @@ import { Issuer, generators } from 'openid-client'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb'
 import * as jose from 'jose'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -27,6 +27,8 @@ const COGNITO_LOGOUT_DOMAIN = process.env.COGNITO_LOGOUT_DOMAIN
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-me-in-production'
 const API_BACKEND_URL = process.env.API_BACKEND_URL || process.env.VITE_API_URL || ''
 const PROFILES_TABLE = process.env.PROFILES_TABLE || ''
+const APPLICATIONS_TABLE = process.env.APPLICATIONS_TABLE || ''
+const ERRORS_TABLE = process.env.ERRORS_TABLE || ''
 
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' })
 const docClient = DynamoDBDocumentClient.from(dynamoClient)
@@ -45,7 +47,17 @@ function getCognitoJwks() {
 
 /** Get userId from session (Hosted UI) or from Bearer JWT (Amplify). Returns null if not authenticated. */
 async function getUserId(req) {
-  if (req.session?.userInfo?.sub) return req.session.userInfo.sub
+  const r = await getUserIdAndEmail(req)
+  return r?.userId ?? null
+}
+
+/** Get userId and email (for first-admin bootstrap). Email from session.userInfo or JWT. */
+async function getUserIdAndEmail(req) {
+  if (req.session?.userInfo) {
+    const sub = req.session.userInfo.sub
+    const email = (req.session.userInfo.email || req.session.userInfo.preferred_username || '').trim().toLowerCase()
+    return sub ? { userId: sub, email } : null
+  }
   const auth = req.headers.authorization
   if (!auth || !auth.startsWith('Bearer ')) return null
   const token = auth.slice(7)
@@ -61,7 +73,8 @@ async function getUserId(req) {
       issuer: COGNITO_ISSUER_URL,
       audience: COGNITO_CLIENT_ID,
     })
-    return payload.sub || null
+    const email = (payload.email || payload.preferred_username || '').trim().toLowerCase()
+    return payload.sub ? { userId: payload.sub, email } : null
   } catch {
     return null
   }
@@ -99,10 +112,14 @@ app.get('/api/me', (req, res) => {
   res.json({ isAuthenticated: false })
 })
 
+// Optional: bootstrap first admin by email (set FIRST_ADMIN_EMAIL in .env; that user becomes admin on next profile load)
+const FIRST_ADMIN_EMAIL = (process.env.FIRST_ADMIN_EMAIL || '').trim().toLowerCase()
+
 // Profile API (DynamoDB only) – requires auth via session or Bearer token
 app.get('/api/profile', async (req, res) => {
-  const userId = await getUserId(req)
-  if (!userId) return res.status(401).json({ error: 'Not authenticated' })
+  const who = await getUserIdAndEmail(req)
+  if (!who?.userId) return res.status(401).json({ error: 'Not authenticated' })
+  const { userId, email: tokenEmail } = who
   if (!PROFILES_TABLE) return res.status(503).json({ error: 'Profile storage not configured. Set PROFILES_TABLE in .env.' })
   res.setHeader('Cache-Control', 'no-store')
   try {
@@ -110,7 +127,24 @@ app.get('/api/profile', async (req, res) => {
       TableName: PROFILES_TABLE,
       Key: { userId },
     }))
-    return res.json(Item?.profile ?? {})
+    let profile = Item?.profile ?? {}
+    if (FIRST_ADMIN_EMAIL && !profile.isAdmin) {
+      const profileEmail = (profile.email || '').trim().toLowerCase()
+      const matches = profileEmail === FIRST_ADMIN_EMAIL || tokenEmail === FIRST_ADMIN_EMAIL
+      if (matches) {
+        profile = { ...profile, isAdmin: true }
+        if (!profile.email && tokenEmail) profile.email = tokenEmail
+        await docClient.send(new PutCommand({
+          TableName: PROFILES_TABLE,
+          Item: {
+            userId,
+            profile,
+            updatedAt: new Date().toISOString(),
+          },
+        }))
+      }
+    }
+    return res.json(profile)
   } catch (err) {
     console.error('Profile GET error:', err)
     return res.status(500).json({ error: 'Failed to load profile', message: err.message })
@@ -122,8 +156,15 @@ app.put('/api/profile', express.json(), async (req, res) => {
   if (!userId) return res.status(401).json({ error: 'Not authenticated' })
   if (!PROFILES_TABLE) return res.status(503).json({ error: 'Profile storage not configured. Set PROFILES_TABLE in .env.' })
   res.setHeader('Cache-Control', 'no-store')
-  const profile = req.body || {}
+  const incoming = req.body || {}
   try {
+    const { Item } = await docClient.send(new GetCommand({
+      TableName: PROFILES_TABLE,
+      Key: { userId },
+    }))
+    const existingProfile = Item?.profile || {}
+    const isAdmin = existingProfile.isAdmin === true ? (incoming.isAdmin !== false) : false
+    const profile = { ...existingProfile, ...incoming, isAdmin }
     await docClient.send(new PutCommand({
       TableName: PROFILES_TABLE,
       Item: {
@@ -139,10 +180,138 @@ app.put('/api/profile', express.json(), async (req, res) => {
   }
 })
 
+/** Require authenticated user with isAdmin in profile. Call after getUserId. */
+async function requireAdmin(req, res, next) {
+  const userId = await getUserId(req)
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' })
+  if (!PROFILES_TABLE) return res.status(503).json({ error: 'Profile storage not configured.' })
+  try {
+    const { Item } = await docClient.send(new GetCommand({
+      TableName: PROFILES_TABLE,
+      Key: { userId },
+    }))
+    if (Item?.profile?.isAdmin !== true) {
+      return res.status(403).json({ error: 'Admin access required' })
+    }
+    req.adminUserId = userId
+    next()
+  } catch (err) {
+    console.error('Admin check error:', err)
+    return res.status(500).json({ error: 'Failed to verify admin', message: err.message })
+  }
+}
+
+// Log client error (authenticated users only)
+app.post('/api/errors', express.json(), async (req, res) => {
+  const userId = await getUserId(req)
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' })
+  if (!ERRORS_TABLE) return res.status(503).json({ error: 'Error logging not configured.' })
+  const { message, stack, url, context } = req.body || {}
+  if (!message) return res.status(400).json({ error: 'message is required' })
+  const id = `err-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+  try {
+    await docClient.send(new PutCommand({
+      TableName: ERRORS_TABLE,
+      Item: {
+        id,
+        userId: userId || null,
+        message: String(message).slice(0, 2000),
+        stack: stack ? String(stack).slice(0, 4000) : null,
+        url: url || null,
+        context: context && typeof context === 'object' ? context : null,
+        createdAt: new Date().toISOString(),
+      },
+    }))
+    return res.status(201).json({ id })
+  } catch (err) {
+    console.error('Error log write:', err)
+    return res.status(500).json({ error: 'Failed to log error', message: err.message })
+  }
+})
+
+// Admin: stats (user counts by plan, total applications)
+app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+  try {
+    let totalUsers = 0
+    let freeUsers = 0
+    let paidUsers = 0
+    if (PROFILES_TABLE) {
+      const { Items } = await docClient.send(new ScanCommand({ TableName: PROFILES_TABLE }))
+      totalUsers = Items?.length ?? 0
+      for (const row of Items || []) {
+        const plan = row?.profile?.plan
+        if (plan === 'pro') paidUsers += 1
+        else freeUsers += 1
+      }
+    }
+    let totalApplications = 0
+    if (APPLICATIONS_TABLE) {
+      const { Items } = await docClient.send(new ScanCommand({ TableName: APPLICATIONS_TABLE }))
+      totalApplications = Items?.length ?? 0
+    }
+    return res.json({
+      users: { total: totalUsers, free: freeUsers, paid: paidUsers },
+      applications: { total: totalApplications },
+    })
+  } catch (err) {
+    console.error('Admin stats error:', err)
+    return res.status(500).json({ error: 'Failed to load stats', message: err.message })
+  }
+})
+
+// Admin: list recent errors
+app.get('/api/admin/errors', requireAdmin, async (req, res) => {
+  if (!ERRORS_TABLE) return res.status(503).json({ error: 'Error tracking not configured.' })
+  try {
+    const { Items } = await docClient.send(new ScanCommand({
+      TableName: ERRORS_TABLE,
+      Limit: 100,
+    }))
+    const list = (Items || []).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+    return res.json(list)
+  } catch (err) {
+    console.error('Admin errors list:', err)
+    return res.status(500).json({ error: 'Failed to load errors', message: err.message })
+  }
+})
+
+// Admin: promote user to admin by email (look up profile by profile.email)
+app.post('/api/admin/promote', express.json(), requireAdmin, async (req, res) => {
+  if (!PROFILES_TABLE) return res.status(503).json({ error: 'Profile storage not configured.' })
+  const email = (req.body?.email || '').trim().toLowerCase()
+  if (!email) return res.status(400).json({ error: 'Email is required' })
+  try {
+    const { Items } = await docClient.send(new ScanCommand({ TableName: PROFILES_TABLE }))
+    const row = (Items || []).find(
+      (r) => (r?.profile?.email || '').trim().toLowerCase() === email
+    )
+    if (!row?.userId) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'No profile found with that email. The user must sign in and complete About You at least once.',
+      })
+    }
+    const profile = { ...(row.profile || {}), isAdmin: true }
+    await docClient.send(new PutCommand({
+      TableName: PROFILES_TABLE,
+      Item: {
+        userId: row.userId,
+        profile,
+        updatedAt: new Date().toISOString(),
+      },
+    }))
+    return res.json({ ok: true, email, userId: row.userId })
+  } catch (err) {
+    console.error('Admin promote error:', err)
+    return res.status(500).json({ error: 'Failed to promote user', message: err.message })
+  }
+})
+
 // Proxy scholarship/application API to Lambda when API_BACKEND_URL is set (avoids CORS, use VITE_API_URL=/api in frontend)
 app.use('/api', express.json())
 app.all('/api/*', (req, res, next) => {
   if (req.path === '/api/me' || req.path === '/api/profile') return next()
+  if (req.path.startsWith('/api/admin') || req.path === '/api/errors') return next()
   if (!API_BACKEND_URL || API_BACKEND_URL.includes('YOUR-API-ID')) {
     return res.status(503).json({ error: 'API not configured. Set API_BACKEND_URL or VITE_API_URL in .env to your Lambda API URL.' })
   }

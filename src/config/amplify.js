@@ -6,7 +6,7 @@ const oauthDomain = import.meta.env.VITE_COGNITO_OAUTH_DOMAIN
 
 function getOrigin() {
   if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin
+    return window.location.origin.replace(/\/$/, '')
   }
   return 'http://localhost:3000'
 }

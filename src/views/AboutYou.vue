@@ -150,6 +150,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import { useProfileStore } from '../stores/profile'
 
 const US_STATES = [
@@ -232,6 +233,10 @@ const success = ref(false)
 const saveFailed = ref(false)
 
 onMounted(async () => {
+  const auth = useAuthStore()
+  if (import.meta.env.VITE_COGNITO_USER_POOL_ID && !(auth.idToken?.value ?? auth.idToken)) {
+    await auth.loadSession()
+  }
   const existing = await profileStore.getProfile()
   form.value = { ...form.value, ...existing }
   // Pre-fill email from auth if we have it (e.g. from server session or Amplify)
